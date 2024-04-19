@@ -321,55 +321,65 @@ function(add_child_image_from_source)
     #       files must be used instead of the child image default configs.
     #       The append a child image default config, place the additional settings
     #       in `child_image/<ACI_NAME>.conf`.
-    set(ACI_CONF_DIR ${APPLICATION_CONFIG_DIR}/child_image)
-    set(ACI_NAME_CONF_DIR ${APPLICATION_CONFIG_DIR}/child_image/${ACI_NAME})
-    if (NOT ${ACI_NAME}_CONF_FILE)
-      ncs_file(CONF_FILES ${ACI_NAME_CONF_DIR}
-        BOARD ${ACI_BOARD}
-        # Child image always uses the same revision as parent board.
-        BOARD_REVISION ${BOARD_REVISION}
-        KCONF ${ACI_NAME}_CONF_FILE
-        DTS ${ACI_NAME}_DTC_OVERLAY_FILE
-        BUILD ${CONF_FILE_BUILD_TYPE}
-        SUFFIX ${${ACI_NAME}_FILE_SUFFIX}
-        )
-      # Place the result in the CMake cache and remove local scoped variable.
-      foreach(file CONF_FILE DTC_OVERLAY_FILE)
-        if(DEFINED ${ACI_NAME}_${file})
-          zephyr_file_suffix(${ACI_NAME}_${file} SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
+    zephyr_get(COMMON_CHILD_IMAGE_CONFIG_DIR)
+    string(CONFIGURE "${COMMON_CHILD_IMAGE_CONFIG_DIR}" COMMON_CHILD_IMAGE_CONFIG_DIR)
+    foreach(config_dir ${APPLICATION_CONFIG_DIR} ${COMMON_CHILD_IMAGE_CONFIG_DIR} )
+      set(ACI_CONF_DIR ${config_dir}/child_image)
+      set(ACI_NAME_CONF_DIR ${config_dir}/child_image/${ACI_NAME})
+      if (NOT ${ACI_NAME}_CONF_FILE)
+        ncs_file(CONF_FILES ${ACI_NAME_CONF_DIR}
+          BOARD ${ACI_BOARD}
+          # Child image always uses the same revision as parent board.
+          BOARD_REVISION ${BOARD_REVISION}
+          KCONF ${ACI_NAME}_CONF_FILE
+          DTS ${ACI_NAME}_DTC_OVERLAY_FILE
+          BUILD ${CONF_FILE_BUILD_TYPE}
+          SUFFIX ${${ACI_NAME}_FILE_SUFFIX}
+          )
+        # Place the result in the CMake cache and remove local scoped variable.
+        foreach(file CONF_FILE DTC_OVERLAY_FILE)
+          if(DEFINED ${ACI_NAME}_${file})
+            zephyr_file_suffix(${ACI_NAME}_${file} SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
 
-          set(${ACI_NAME}_${file} ${${ACI_NAME}_${file}} CACHE STRING
-            "Default ${ACI_NAME} configuration file" FORCE
-            )
-	  set(${ACI_NAME}_${file})
+            set(${ACI_NAME}_${file} ${${ACI_NAME}_${file}} CACHE STRING
+              "Default ${ACI_NAME} configuration file" FORCE
+              )
+            set(${ACI_NAME}_${file})
+          endif()
+        endforeach()
+
+        # Check for configuration fragment. The contents of these are appended
+        # to the project configuration, as opposed to the CONF_FILE which is used
+        # as the base configuration.
+        if(DEFINED ${ACI_NAME}_FILE_SUFFIX)
+          # Child/parent image does not support a prefix for the main application, therefore only
+          # use child image configuration with suffixes if specifically commanded with an argument
+          # targeting this child image
+          set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}.conf)
+          zephyr_file_suffix(child_image_conf_fragment SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
+        elseif(NOT "${CONF_FILE_BUILD_TYPE}" STREQUAL "")
+          set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}_${CONF_FILE_BUILD_TYPE}.conf)
+        else()
+          set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}.conf)
         endif()
-      endforeach()
+        if (EXISTS ${child_image_conf_fragment})
+          add_overlay_config(${ACI_NAME} ${child_image_conf_fragment})
+        endif()
 
-      # Check for configuration fragment. The contents of these are appended
-      # to the project configuration, as opposed to the CONF_FILE which is used
-      # as the base configuration.
-      if(DEFINED ${ACI_NAME}_FILE_SUFFIX)
-        # Child/parent image does not support a prefix for the main application, therefore only
-        # use child image configuration with suffixes if specifically commanded with an argument
-        # targeting this child image
-        set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}.conf)
-        zephyr_file_suffix(child_image_conf_fragment SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
-      elseif(NOT "${CONF_FILE_BUILD_TYPE}" STREQUAL "")
-        set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}_${CONF_FILE_BUILD_TYPE}.conf)
-      else()
-        set(child_image_conf_fragment ${ACI_CONF_DIR}/${ACI_NAME}.conf)
-      endif()
-      if (EXISTS ${child_image_conf_fragment})
-        add_overlay_config(${ACI_NAME} ${child_image_conf_fragment})
-      endif()
+        # Check for overlay named <ACI_NAME>.overlay.
+        set(child_image_dts_overlay ${ACI_CONF_DIR}/${ACI_NAME}.overlay)
+        if (EXISTS ${child_image_dts_overlay})
+          zephyr_file_suffix(child_image_dts_overlay SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
+          add_overlay_dts(${ACI_NAME} ${child_image_dts_overlay})
+        endif()
 
-      # Check for overlay named <ACI_NAME>.overlay.
-      set(child_image_dts_overlay ${ACI_CONF_DIR}/${ACI_NAME}.overlay)
-      if (EXISTS ${child_image_dts_overlay})
-        zephyr_file_suffix(child_image_dts_overlay SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
-        add_overlay_dts(${ACI_NAME} ${child_image_dts_overlay})
+        if(${ACI_NAME}_CONF_FILE OR ${ACI_NAME}_DTC_OVERLAY_FILE
+           OR EXISTS ${child_image_conf_fragment} OR EXISTS ${child_image_dts_overlay})
+           # If anything is picked up directly from APPLICATION_CONFIG_DIR, then look no further.
+          break()
+        endif()
       endif()
-    endif()
+    endforeach()
     # Construct a list of variables that, when present in the root
     # image, should be passed on to all child images as well.
     list(APPEND
