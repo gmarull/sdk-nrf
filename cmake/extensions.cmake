@@ -189,7 +189,7 @@ Please provide one of following: CONF_FILES")
   endif()
 
   set(single_args CONF_FILES PM DOMAIN)
-  set(zephyr_conf_single_args BOARD BOARD_REVISION BUILD DTS KCONF)
+  set(zephyr_conf_single_args BOARD BOARD_REVISION BUILD DTS KCONF SUFFIX)
 
   cmake_parse_arguments(PREPROCESS_ARGS "" "${single_args};${zephyr_conf_single_args}" "" ${ARGN})
   # Remove any argument that is missing value to ensure proper behavior in situations like:
@@ -203,7 +203,9 @@ Please provide one of following: CONF_FILES")
   cmake_parse_arguments(ZEPHYR_FILE "" "${zephyr_conf_single_args}" "" ${ARGN})
 
   if(ZEPHYR_FILE_KCONF)
-    if(ZEPHYR_FILE_BUILD AND EXISTS ${NCS_FILE_CONF_FILES}/prj_${ZEPHYR_FILE_BUILD}.conf)
+    if(ZEPHYR_FILE_SUFFIX AND EXISTS ${NCS_FILE_CONF_FILES}/prj_${ZEPHYR_FILE_SUFFIX}.conf)
+      set(${ZEPHYR_FILE_KCONF} ${NCS_FILE_CONF_FILES}/prj_${ZEPHYR_FILE_SUFFIX}.conf)
+    elseif(ZEPHYR_FILE_BUILD AND EXISTS ${NCS_FILE_CONF_FILES}/prj_${ZEPHYR_FILE_BUILD}.conf)
       set(${ZEPHYR_FILE_KCONF} ${NCS_FILE_CONF_FILES}/prj_${ZEPHYR_FILE_BUILD}.conf)
     elseif(NOT ZEPHYR_FILE_BUILD AND EXISTS ${NCS_FILE_CONF_FILES}/prj.conf)
       set(${ZEPHYR_FILE_KCONF} ${NCS_FILE_CONF_FILES}/prj.conf)

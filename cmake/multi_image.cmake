@@ -331,6 +331,7 @@ function(add_child_image_from_source)
         KCONF ${ACI_NAME}_CONF_FILE
         DTS ${ACI_NAME}_DTC_OVERLAY_FILE
         BUILD ${CONF_FILE_BUILD_TYPE}
+        SUFFIX ${${ACI_NAME}_FILE_SUFFIX}
         )
       # Place the result in the CMake cache and remove local scoped variable.
       foreach(file CONF_FILE DTC_OVERLAY_FILE)
