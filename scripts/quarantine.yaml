@@ -2,7 +2,17 @@
 # will be skipped if quarantine is used. More details here:
 # https://docs.zephyrproject.org/latest/guides/test/twister.html#quarantine
 # To have an empty list use:
+# - scenarios:
+#     - None
+#   platforms:
+#     - all
+
 - scenarios:
-    - None
+    - sample.bluetooth.direct_test_mode
+    - sample.bluetooth.direct_test_mode.nrf5340_usb
+    - sample.bluetooth.direct_test_mode.nrf5340_nrf21540
+    - sample.bluetooth.direct_test_mode.nrf5340_nrf21540_usb
+    - sample.bluetooth.direct_test_mode.nrf5340_nrf21540.no_automatic_power
   platforms:
-    - all
+    - nrf5340dk/nrf5340/cpunet
+  comment: "Sample design incompatible with HWMv2, needs rework"
