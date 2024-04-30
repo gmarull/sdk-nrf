@@ -339,8 +339,6 @@ function(add_child_image_from_source)
         # Place the result in the CMake cache and remove local scoped variable.
         foreach(file CONF_FILE DTC_OVERLAY_FILE)
           if(DEFINED ${ACI_NAME}_${file})
-            zephyr_file_suffix(${ACI_NAME}_${file} SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
-
             set(${ACI_NAME}_${file} ${${ACI_NAME}_${file}} CACHE STRING
               "Default ${ACI_NAME} configuration file" FORCE
               )
@@ -368,8 +366,8 @@ function(add_child_image_from_source)
 
         # Check for overlay named <ACI_NAME>.overlay.
         set(child_image_dts_overlay ${ACI_CONF_DIR}/${ACI_NAME}.overlay)
+        zephyr_file_suffix(child_image_dts_overlay SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
         if (EXISTS ${child_image_dts_overlay})
-          zephyr_file_suffix(child_image_dts_overlay SUFFIX ${${ACI_NAME}_FILE_SUFFIX})
           add_overlay_dts(${ACI_NAME} ${child_image_dts_overlay})
         endif()
 
