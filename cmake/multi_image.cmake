@@ -327,13 +327,20 @@ function(add_child_image_from_source)
       set(ACI_CONF_DIR ${config_dir}/child_image)
       set(ACI_NAME_CONF_DIR ${config_dir}/child_image/${ACI_NAME})
       if (NOT ${ACI_NAME}_CONF_FILE)
+        if(DEFINED CONF_FILE_BUILD_TYPE AND DEFINED ${ACI_NAME}_FILE_SUFFIX)
+          message(WARNING "Cannot use BUILD_TYPE='${CONF_FILE_BUILD_TYPE}' together with ${ACI_NAME}_FILE_SUFFIX='${${ACI_NAME}_FILE_SUFFIX}'. "
+                          "Ignoring BUILD_TYPE='${CONF_FILE_BUILD_TYPE}'"
+          )
+	else()
+	  set(LEGACY_BUILD_ARGUMENT BUILD ${CONF_FILE_BUILD_TYPE})
+	endif()
         ncs_file(CONF_FILES ${ACI_NAME_CONF_DIR}
           BOARD ${ACI_BOARD}
           # Child image always uses the same revision as parent board.
           BOARD_REVISION ${BOARD_REVISION}
           KCONF ${ACI_NAME}_CONF_FILE
           DTS ${ACI_NAME}_DTC_OVERLAY_FILE
-          BUILD ${CONF_FILE_BUILD_TYPE}
+          ${LEGACY_BUILD_ARGUMENT}
           SUFFIX ${${ACI_NAME}_FILE_SUFFIX}
           )
         # Place the result in the CMake cache and remove local scoped variable.
