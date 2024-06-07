@@ -24,3 +24,8 @@ west-commands:
       - name: thingy91x-reset
         class: Thingy91XReset
         help: Reset the Thingy:91 X
+  - file: scripts/west_commands/genboard/ncs_genboard.py
+    commands:
+      - name: ncs-genboard
+        class: NcsGenboard
+        help: generate board skeleton files for any Nordic SoC
