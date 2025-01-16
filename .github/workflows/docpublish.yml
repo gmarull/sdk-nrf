@@ -3,6 +3,8 @@ name: Documentation Publish
 on:
   workflow_run:
     workflows: ["Documentation Build"]
+    branches:
+      - main
     types:
       - completed
 
